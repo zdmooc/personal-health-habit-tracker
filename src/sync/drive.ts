@@ -136,7 +136,9 @@ async function doSync():Promise<SyncResult> {
 }
 export async function syncDrive():Promise<SyncResult> {
   if(running)return running;
-  const work=async()=>await doSync();
-  running=(navigator.locks ? navigator.locks.request('personal-health-habit-tracker-drive',work):work());
+  running=(async()=>{
+    if(navigator.locks) return await navigator.locks.request('personal-health-habit-tracker-drive',async()=>await doSync());
+    return await doSync();
+  })();
   try{return await running;}finally{running=null;}
 }
