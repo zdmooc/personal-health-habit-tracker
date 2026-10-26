@@ -75,7 +75,18 @@ export async function importFile(file: File): Promise<number> {
   const bytes=new TextEncoder().encode(content);
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(b=>b.toString(16).padStart(2,'0')).join('');
   await db.transaction('rw',db.events,db.backups, async()=>{
-    await appendMany(events);
+    // Ne jamais remplacer une modification locale sur réimport du même historique.
+    const ids = new Set(await db.events.toCollection().primaryKeys());
+    const missing = events.filter(e => !ids.has(e.id));
+    if(missing.length) await appendMany(missing);
+    const external = object(raw);
+    for(const backupRaw of arr(external.rawSources)) {
+      const backup = object(backupRaw);
+      if(str(backup.id) && str(backup.name) && typeof backup.content==='string') {
+        await db.backups.put({id:str(backup.id),name:str(backup.name),
+          importedAt:str(backup.importedAt)||todayIso(),content:backup.content});
+      }
+    }
     await db.backups.put({id:hash,name:file.name,importedAt:todayIso(),content});
   });
   return events.length;

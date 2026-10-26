@@ -109,7 +109,13 @@ async function doSync():Promise<SyncResult> {
   for(const f of shards) {
     const items=await readEvents(f.id);
     remote.set(f.name,{id:f.id,events:items});
-    if(items.length) { await db.events.bulkPut(items); downloaded+=items.length; }
+    if(items.length) {
+      // Ne jamais écraser un événement local déjà connu, même avec le même ID.
+      const localIds = new Set(await db.events.toCollection().primaryKeys());
+      const missing = items.filter(e => !localIds.has(e.id));
+      if (missing.length) await db.events.bulkAdd(missing);
+      downloaded += missing.length;
+    }
   }
   // Chaque appareil écrit exclusivement ses propres partitions (appareil/jour).
   const local=(await db.events.toArray()).filter(e=>e.deviceId===deviceId());

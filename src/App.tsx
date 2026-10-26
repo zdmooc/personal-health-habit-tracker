@@ -179,7 +179,7 @@ export default function App() {
             <button className="action-btn pale" disabled={!ownToday} onClick={()=>void add('lozenge',{doseMg:1.5})}><Plus size={22}/><span>Une pastille</span></button>
           </div>
           <div className="field"><label htmlFor="note">Note facultative</label><input id="note" value={note} onChange={e=>setNote(e.target.value)} placeholder="Ex. après les courses, sans envie"/></div>
-          <div className="patch-controls"><div><strong>Patch nicotinique</strong><p>{stats.patchActive?'Patch déclaré en place':'Aucun patch actuellement confirmé'}{stats.patchAppliedAt?' · '+parisTime(stats.patchAppliedAt):''}</p></div>
+          <div className="patch-controls"><div><strong>Patch nicotinique</strong><p>{stats.patchActive?'Dernier événement : patch posé':'Dernier événement : patch retiré ou inconnu'}{stats.patchAppliedAt?' · '+parisTime(stats.patchAppliedAt):''}{stats.patchAppliedAt && Date.now()-Date.parse(stats.patchAppliedAt)>24*3600000?' · renouvellement à vérifier':''}</p></div>
             <div className="button-group"><button disabled={!ownToday} onClick={()=>void add('patch_on',{doseMg:21})}>Posé</button><button disabled={!ownToday||!stats.patchActive} onClick={()=>void add('patch_off')}>Retiré</button></div>
           </div>
           <details className="sleep-details"><summary><Moon size={16}/> Noter le sommeil</summary>

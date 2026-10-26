@@ -23,6 +23,7 @@ export function statsFor(all: HabitEvent[], day: string = parisDay(), goal = 60)
     if (delta >= 0) gaps.push(delta);
   }
   const mostRecent = [...timed].sort((a,b) => b.occurredAt!.localeCompare(a.occurredAt!))[0] ?? null;
+  const unknownAfterLast = mostRecent?.sequence != null && chronological.some(e => !e.occurredAt && e.sequence != null && e.sequence > mostRecent.sequence!);
   const patchEvents = active.filter(e => e.kind === 'patch_on' || e.kind === 'patch_off').filter(e => e.occurredAt)
     .sort((a,b) => a.occurredAt!.localeCompare(b.occurredAt!));
   const patch = patchEvents.at(-1);
@@ -35,7 +36,7 @@ export function statsFor(all: HabitEvent[], day: string = parisDay(), goal = 60)
     avgMinutes: gaps.length ? gaps.reduce((a,b)=>a+b,0)/gaps.length : null,
     validIntervals: gaps.length, atLeastGoal: gaps.filter(n=>n>=goal).length,
     lastCigarette: mostRecent,
-    targetAt: mostRecent?.occurredAt ? Date.parse(mostRecent.occurredAt) + goal*60000 : null,
+    targetAt: mostRecent?.occurredAt && !unknownAfterLast ? Date.parse(mostRecent.occurredAt) + goal*60000 : null,
     patchActive: patch?.kind === 'patch_on',
     patchAppliedAt: patch?.kind === 'patch_on' ? patch.occurredAt : null
   };
